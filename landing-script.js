@@ -201,6 +201,14 @@ if (idssOption) {
     });
 }
 
+// DB2 option click handler
+const db2Option = document.getElementById('db2Option');
+if (db2Option) {
+    db2Option.addEventListener('click', () => {
+        window.location.href = 'db2.html';
+    });
+}
+
 // Show notification
 function showNotification(message) {
     const notification = document.createElement('div');

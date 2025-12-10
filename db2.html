@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB2 Page</title>
+    <link rel="stylesheet" href="landing-style.css">
+</head>
+<body>
+    <!-- Matrix Rain Background -->
+    <div class="matrix-bg"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="home-icon-btn" id="homeBtn">
+                <span>🏠</span>
+            </button>
+        </div>
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+            <h1>Tech Dashboard Version 2</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span class="user-icon">👤</span>
+                <span class="user-name" id="userName">Loading...</span>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <span>[ LOGOUT ]</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-layout">
+            <div class="main-content">
+                <div class="terminal">
+                    <div class="terminal-body">
+                        <!-- Content will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Check authentication on load
+        window.addEventListener('load', () => {
+            checkAuth();
+            loadUserData();
+        });
+
+        // Check if user is authenticated
+        function checkAuth() {
+            const authToken = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (!authToken || !userData) {
+                window.location.href = 'index.html';
+                return;
+            }
+        }
+
+        // Load and display user data
+        function loadUserData() {
+            const userDataString = localStorage.getItem('userData');
+            
+            if (!userDataString) return;
+            
+            try {
+                const userData = JSON.parse(userDataString);
+                const adminLogin = userData.adminLogin;
+                const userName = adminLogin.name || 'User';
+                document.getElementById('userName').textContent = userName;
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        // Logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+                window.location.href = 'index.html';
+            });
+        }
+
+        // Home button
+        const homeBtn = document.getElementById('homeBtn');
+        if (homeBtn) {
+            homeBtn.addEventListener('click', () => {
+                window.location.href = 'landing.html';
+            });
+        }
+    </script>
+</body>
+</html>

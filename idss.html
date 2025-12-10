@@ -12,9 +12,11 @@
     <!-- Header -->
     <header class="header">
         <div class="header-left">
-            <button class="back-btn" id="backBtn">
-                <span>← BACK</span>
+            <button class="home-icon-btn" id="backBtn">
+                <span>🏠</span>
             </button>
+        </div>
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
             <h1>IDSS</h1>
         </div>
         <div class="header-right">
@@ -31,11 +33,6 @@
     <!-- Main Content -->
     <div class="container">
         <div class="page-layout">
-            <!-- Sidebar Toggle Button -->
-            <button class="sidebar-toggle" id="sidebarToggle">
-                <span class="toggle-icon">☰</span>
-            </button>
-            
             <!-- Sidebar -->
             <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
@@ -63,6 +60,17 @@
                         <span class="nav-label">Check RefInstall</span>
                     </a>
                 </nav>
+                
+                <!-- Sidebar Toggle Button -->
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <span class="toggle-icon">←</span>
+                </button>
+                
+                <!-- Notes Section -->
+                <div class="sidebar-notes">
+                    <h4>Notes</h4>
+                    <textarea id="sidebarNotes" placeholder="Type your notes here..."></textarea>
+                </div>
             </aside>
 
             <!-- Main Content Area -->

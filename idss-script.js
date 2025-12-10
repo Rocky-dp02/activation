@@ -103,6 +103,45 @@ function initializeSidebar() {
     
     // Setup sidebar toggle for desktop
     setupSidebarToggle();
+    
+    // Setup notes persistence
+    setupNotesPersistence();
+}
+
+// Setup notes persistence with localStorage
+function setupNotesPersistence() {
+    const notesTextarea = document.getElementById('sidebarNotes');
+    const notesSection = document.querySelector('.sidebar-notes');
+    const sidebar = document.getElementById('sidebar');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    
+    if (notesTextarea) {
+        // Load saved notes from localStorage
+        const savedNotes = localStorage.getItem('idss_notes');
+        if (savedNotes) {
+            notesTextarea.value = savedNotes;
+        }
+        
+        // Save notes on input with debouncing
+        let saveTimeout;
+        notesTextarea.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                localStorage.setItem('idss_notes', notesTextarea.value);
+            }, 500); // Save after 500ms of no typing
+        });
+    }
+    
+    // Click notes icon to reveal sidebar when hidden
+    if (notesSection && sidebar && toggleIcon) {
+        notesSection.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('hidden')) {
+                e.stopPropagation();
+                sidebar.classList.remove('hidden');
+                toggleIcon.textContent = '←';
+            }
+        });
+    }
 }
 
 // Update sidebar title (for mobile dropdown)
@@ -140,11 +179,17 @@ function setupMobileDropdown() {
 function setupSidebarToggle() {
     const toggleBtn = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
+    const toggleIcon = toggleBtn?.querySelector('.toggle-icon');
     
     if (toggleBtn && sidebar) {
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             sidebar.classList.toggle('hidden');
+            
+            // Toggle arrow direction
+            if (toggleIcon) {
+                toggleIcon.textContent = sidebar.classList.contains('hidden') ? '→' : '←';
+            }
         });
     }
 }
@@ -263,7 +308,10 @@ function loadPage(page) {
             <h2>Check RefInstall</h2>
             <div class="search-section">
                 <input type="text" id="refInstallInput" class="search-input" placeholder="Enter reference or installation number...">
-                <button class="search-btn" id="checkRefInstallBtn">Check</button>
+                <div class="button-group">
+                    <button class="search-btn" id="checkRefInstallBtn">Check</button>
+                    <button class="search-btn" id="ibasBtn" style="display: none;">Update IBAS Details</button>
+                </div>
             </div>
             <div class="account-info-section" id="refInstallResultDisplay" style="display: none;">
                 <div class="info-card" id="refInstallDetailsContainer">
@@ -1944,6 +1992,7 @@ function displayRetailerAccountData(data) {
 function setupRefInstallCheck() {
     const checkBtn = document.getElementById('checkRefInstallBtn');
     const refInstallInput = document.getElementById('refInstallInput');
+    const ibasBtn = document.getElementById('ibasBtn');
     
     if (checkBtn && refInstallInput) {
         // Check button click
@@ -1965,6 +2014,17 @@ function setupRefInstallCheck() {
                 } else {
                     showRefInstallMessage('Please enter a reference or installation number', 'error');
                 }
+            }
+        });
+    }
+    
+    if (ibasBtn) {
+        ibasBtn.addEventListener('click', () => {
+            const searchQuery = refInstallInput.value.trim();
+            if (searchQuery) {
+                updateIbasStatus(searchQuery);
+            } else {
+                showRefInstallMessage('Please check a reference number first', 'error');
             }
         });
     }
@@ -2001,11 +2061,14 @@ async function checkRefInstall(searchQuery) {
 
         const htmlData = await response.text();
         console.log('RefInstall check response:', htmlData);
+        console.log('Response length:', htmlData.length);
         
         // Parse the HTML response
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlData, 'text/html');
         const table = doc.querySelector('table#service1') || doc.querySelector('table');
+        
+        console.log('Table found:', !!table);
         
         if (!table) {
             showRefInstallMessage('No data found for this reference number', 'error');
@@ -2031,6 +2094,12 @@ async function checkRefInstall(searchQuery) {
         });
         
         console.log('RefData object:', refData);
+        console.log('Total fields extracted:', Object.keys(refData).length);
+        
+        if (Object.keys(refData).length === 0) {
+            showRefInstallMessage('No data could be extracted from the response', 'error');
+            return;
+        }
         
         // Display the data
         displayRefInstallData(refData);
@@ -2038,9 +2107,23 @@ async function checkRefInstall(searchQuery) {
         if (messageDiv) messageDiv.style.display = 'none';
         if (resultDiv) resultDiv.style.display = 'block';
         
+        // Show the Update IBAS Status button
+        const ibasBtn = document.getElementById('ibasBtn');
+        if (ibasBtn) ibasBtn.style.display = 'block';
+        
     } catch (error) {
         console.error('Error checking RefInstall:', error);
-        showRefInstallMessage('An error occurred while checking. Please try again.', 'error');
+        console.error('Error details:', error.message, error.stack);
+        
+        let errorMessage = 'An error occurred while checking. Please try again.';
+        
+        if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Cannot connect to server. Please make sure the proxy server is running.';
+        } else if (error.message.includes('HTTP error')) {
+            errorMessage = `Server error: ${error.message}`;
+        }
+        
+        showRefInstallMessage(errorMessage, 'error');
     }
 }
 
@@ -2056,14 +2139,17 @@ function displayRefInstallData(data) {
     html += '<h3 style="color: #00ff41; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #00ff41;">RefInstall Information</h3>';
     html += '<div style="display: grid; gap: 10px;">';
     
-    // Display all fields in the order they appear
+    // Display all fields in the order they appear, but skip empty values
     Object.entries(data).forEach(([key, value]) => {
-        html += `
-            <div style="display: flex; padding: 10px; background: rgba(0, 255, 65, 0.05); border-radius: 4px; border-left: 3px solid #00ff41;">
-                <span style="flex-shrink: 0; min-width: 250px; color: rgba(0, 255, 65, 0.8); font-weight: 600;">${key}:</span>
-                <span style="color: #00ff41; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 10px;">${value || '-'}</span>
-            </div>
-        `;
+        // Skip if value is empty, null, undefined, or just whitespace/dash
+        if (value && value.trim() && value.trim() !== '-') {
+            html += `
+                <div style="display: flex; padding: 10px; background: rgba(0, 255, 65, 0.05); border-radius: 4px; border-left: 3px solid #00ff41;">
+                    <span style="flex-shrink: 0; min-width: 250px; color: rgba(0, 255, 65, 0.8); font-weight: 600;">${key}:</span>
+                    <span style="color: #00ff41; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 10px;">${value}</span>
+                </div>
+            `;
+        }
     });
     
     html += '</div></div>';
@@ -2075,6 +2161,7 @@ function displayRefInstallData(data) {
 function showRefInstallMessage(message, type) {
     const messageDiv = document.getElementById('refInstallMessage');
     const resultDiv = document.getElementById('refInstallResultDisplay');
+    const ibasBtn = document.getElementById('ibasBtn');
     
     if (messageDiv) {
         messageDiv.innerHTML = `<p class="${type}">${message}</p>`;
@@ -2084,6 +2171,427 @@ function showRefInstallMessage(message, type) {
     if (resultDiv) {
         resultDiv.style.display = 'none';
     }
+    
+    // Hide Update IBAS Status button when showing message
+    if (ibasBtn) {
+        ibasBtn.style.display = 'none';
+    }
+}
+
+// Update IBAS Status function
+async function updateIbasStatus(referenceNumber) {
+    const ibasBtn = document.getElementById('ibasBtn');
+    
+    if (!referenceNumber) {
+        alert('No reference number provided');
+        return;
+    }
+    
+    // Disable button and show loading state
+    if (ibasBtn) {
+        ibasBtn.disabled = true;
+        ibasBtn.textContent = 'Loading...';
+    }
+    
+    try {
+        console.log('Fetching IBAS data for:', referenceNumber);
+        
+        // Get token from localStorage
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        const token = userData?.token;
+        
+        if (!token) {
+            alert('Authentication token not found. Please login again.');
+            return;
+        }
+        
+        const timestamp = Date.now();
+        const response = await fetch(`https://ibas.s2s.ph/api/dashboard/prepaid-fiber-customer?status=&page=1&limit=10&searchVal=${encodeURIComponent(referenceNumber)}`, {
+            method: 'GET',
+            headers: {
+                'Accept': '*/*',
+                'wsc-token': token,
+                'wsc-timestamp': timestamp.toString(),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('IBAS response:', data);
+        
+        // Display the data in a modal
+        displayIbasModal(data, referenceNumber);
+        
+    } catch (error) {
+        console.error('Error fetching IBAS data:', error);
+        
+        let errorMessage = 'An error occurred while fetching IBAS data. Please try again.';
+        
+        if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Cannot connect to IBAS server. Please check your connection.';
+        } else if (error.message.includes('HTTP error')) {
+            errorMessage = `Server error: ${error.message}`;
+        }
+        
+        alert(errorMessage);
+    } finally {
+        // Re-enable button
+        if (ibasBtn) {
+            ibasBtn.disabled = false;
+            ibasBtn.textContent = 'Update IBAS Details';
+        }
+    }
+}
+
+// Display IBAS data in modal
+function displayIbasModal(data, referenceNumber, existingBackdrop = null) {
+    // Use existing backdrop or create new one
+    const modalBackdrop = existingBackdrop || document.createElement('div');
+    
+    if (!existingBackdrop) {
+        modalBackdrop.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        `;
+    }
+    
+    // Clear existing modal content if refreshing
+    modalBackdrop.innerHTML = '';
+    
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: linear-gradient(135deg, rgba(13, 17, 23, 0.98) 0%, rgba(20, 25, 35, 0.98) 100%);
+        border: 2px solid #00ff41;
+        border-radius: 12px;
+        max-width: 900px;
+        max-height: 90vh;
+        width: 100%;
+        overflow-y: auto;
+        box-shadow: 0 0 40px rgba(0, 255, 65, 0.5);
+        padding: 0;
+    `;
+    
+    // Modal header
+    const header = document.createElement('div');
+    header.style.cssText = `
+        position: sticky;
+        top: 0;
+        background: linear-gradient(135deg, rgba(0, 255, 65, 0.2) 0%, rgba(0, 217, 255, 0.2) 100%);
+        border-bottom: 2px solid #00ff41;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+    `;
+    
+    const title = document.createElement('h2');
+    title.style.cssText = `
+        margin: 0;
+        color: #00ff41;
+        font-size: 20px;
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.7);
+    `;
+    title.textContent = `IBAS Customer Data`;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.style.cssText = `
+        background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.3s;
+    `;
+    closeBtn.textContent = '✕ Close';
+    closeBtn.onclick = () => modalBackdrop.remove();
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    
+    // Modal body
+    const body = document.createElement('div');
+    body.style.cssText = `
+        padding: 20px;
+    `;
+    
+    // Parse and display data as form
+    let content = '<form style="color: #00ff41;">';
+    
+    if (data && data.data && data.data.prepaidFiberCustomers && data.data.prepaidFiberCustomers.length > 0) {
+        const customer = data.data.prepaidFiberCustomers[0]; // Get first customer record
+        
+        // Store customer _id for update
+        const customerId = customer._id;
+        
+        // Define field mappings
+        const fields = [
+            { key: 'createdDateTimeLabel', label: 'Created Date' },
+            { key: 'referenceNumber', label: 'Reference Number' },
+            { key: 'firstName', label: 'First Name' },
+            { key: 'middleName', label: 'Middle Name' },
+            { key: 'lastName', label: 'Last Name' },
+            { key: 'mobileNumber', label: 'Mobile Number' },
+            { key: 'area', label: 'Area' },
+            { key: 'address', label: 'Address' },
+            { key: 'village', label: 'Village' },
+            { key: 'city', label: 'City' },
+            { key: 'retailerName', label: 'Retailer' },
+            { key: 'paymentDate', label: 'Payment Date' },
+            { key: 'napCode', label: 'Nap Code' },
+            { key: 'port', label: 'Port' },
+            { key: 'status', label: 'STATUS' }
+        ];
+        
+        fields.forEach(field => {
+            const value = customer[field.key] || '';
+            
+            if (field.key === 'status') {
+                // Status dropdown
+                content += `
+                    <div style="display: flex; margin-bottom: 15px; align-items: center;">
+                        <label style="flex-shrink: 0; width: 200px; color: rgba(0, 255, 65, 0.8); font-weight: 600;">${field.label}</label>
+                        <div style="flex: 1;">
+                            <select name="${field.key}" style="width: 100%; padding: 8px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 65, 0.3); border-radius: 4px; color: #00ff41; font-size: 13px;">
+                                <option value="REGISTERED" ${value === 'REGISTERED' ? 'selected' : ''}>Registered</option>
+                                <option value="ONLINE_JO_FAILED" ${value === 'ONLINE_JO_FAILED' ? 'selected' : ''}>Failed Online JO</option>
+                                <option value="RESERVED" ${value === 'RESERVED' ? 'selected' : ''}>Reserved</option>
+                                <option value="PAYLATER" ${value === 'PAYLATER' ? 'selected' : ''}>Pay later</option>
+                                <option value="PAID" ${value === 'PAID' ? 'selected' : ''}>Paid</option>
+                                <option value="DELETED" ${value === 'DELETED' ? 'selected' : ''}>Deleted</option>
+                                <option value="ACTIVATED" ${value === 'ACTIVATED' ? 'selected' : ''}>Activated</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Text input - make Created Date and Reference Number readonly
+                const isReadonly = (field.key === 'createdDateTimeLabel' || field.key === 'referenceNumber') ? 'readonly' : '';
+                content += `
+                    <div style="display: flex; margin-bottom: 15px; align-items: center;">
+                        <label style="flex-shrink: 0; width: 200px; color: rgba(0, 255, 65, 0.8); font-weight: 600;">${field.label}</label>
+                        <div style="flex: 1;">
+                            <input type="text" name="${field.key}" value="${value}" style="width: 100%; padding: 8px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 65, 0.3); border-radius: 4px; color: #00ff41; font-size: 13px;" ${isReadonly} />
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        // Footer with buttons
+        content += `
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0, 255, 65, 0.3); display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="save-btn" data-customer-id="${customerId}" style="padding: 10px 20px; background: linear-gradient(135deg, #00ff41 0%, #00d9ff 100%); border: none; border-radius: 6px; color: #0a0e27; font-weight: bold; cursor: pointer; transition: all 0.3s;">Save</button>
+                <button type="button" class="cancel-btn" style="padding: 10px 20px; background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%); border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: all 0.3s;">Cancel</button>
+            </div>
+        `;
+        
+    } else {
+        content += '<p style="color: #00ff41; text-align: center; padding: 20px;">No customer data found</p>';
+    }
+    
+    content += '</form>';
+    
+    body.innerHTML = content;
+    
+    // Add event listeners for buttons
+    const saveBtn = body.querySelector('.save-btn');
+    const cancelBtn = body.querySelector('.cancel-btn');
+    const form = body.querySelector('form');
+    
+    if (saveBtn) {
+        saveBtn.onclick = async () => {
+            try {
+                // Disable button during submission
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+                
+                // Collect form data
+                const formData = new FormData(form);
+                const customerIdValue = saveBtn.getAttribute('data-customer-id');
+                const payload = {
+                    _id: customerIdValue
+                };
+                
+                // Add all form fields to payload
+                for (const [key, value] of formData.entries()) {
+                    payload[key] = value;
+                }
+                
+                // Get authentication tokens
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                const token = userData.token;
+                const timestamp = Date.now();
+                
+                // Create AbortController to cancel request after 30 seconds
+                const controller = new AbortController();
+                
+                // Send POST request (let it run but ignore response)
+                fetch('https://ibas.s2s.ph/api/dashboard/prepaid-fiber-customer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'wsc-token': token,
+                        'wsc-timestamp': timestamp.toString(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new URLSearchParams(payload).toString(),
+                    signal: controller.signal
+                }).then(response => {
+                    // Ignore response, just log it
+                    console.log('Update request completed with status:', response.status);
+                    return response.json();
+                }).then(data => {
+                    console.log('Update response data:', data);
+                }).catch(error => {
+                    if (error.name !== 'AbortError') {
+                        console.log('Update request error:', error);
+                    }
+                });
+                
+                // Cancel the request after 30 seconds
+                setTimeout(() => {
+                    controller.abort();
+                }, 30000);
+                
+                // Show success popup immediately
+                const successPopup = document.createElement('div');
+                successPopup.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(135deg, rgba(0, 255, 65, 0.95) 0%, rgba(0, 217, 255, 0.95) 100%);
+                    padding: 30px 50px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 255, 65, 0.4);
+                    z-index: 10002;
+                    color: #0a0e27;
+                    font-size: 18px;
+                    font-weight: bold;
+                    text-align: center;
+                `;
+                successPopup.textContent = 'Customer data updated successfully!';
+                document.body.appendChild(successPopup);
+                
+                // Remove success popup after 2 seconds
+                setTimeout(() => {
+                    successPopup.remove();
+                }, 2000);
+                
+                // Show loading screen in modal
+                body.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; color: #00ff41;">
+                        <div style="width: 50px; height: 50px; border: 4px solid rgba(0, 255, 65, 0.3); border-top: 4px solid #00ff41; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <p style="margin-top: 20px; font-size: 16px;">Refreshing data...</p>
+                        <style>
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                        </style>
+                    </div>
+                `;
+                
+                // Refresh the form with updated data after a short delay
+                const searchQuery = payload.referenceNumber;
+                setTimeout(async () => {
+                    try {
+                        // Fetch updated data
+                        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                        const token = userData.token;
+                        const timestamp = Date.now();
+                        
+                        const response = await fetch(`https://ibas.s2s.ph/api/dashboard/prepaid-fiber-customer?searchVal=${encodeURIComponent(searchQuery)}`, {
+                            method: 'GET',
+                            headers: {
+                                'wsc-token': token,
+                                'wsc-timestamp': timestamp.toString(),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const refreshedData = await response.json();
+                        
+                        // Update the modal with refreshed data (keep same backdrop)
+                        displayIbasModal(refreshedData, searchQuery, modalBackdrop);
+                    } catch (error) {
+                        console.error('Error refreshing data:', error);
+                        body.innerHTML = `
+                            <div style="padding: 40px; text-align: center; color: #ff3b30;">
+                                <p style="margin-bottom: 20px;">Failed to refresh data</p>
+                                <button onclick="this.closest('.modal-backdrop').remove()" style="padding: 10px 20px; background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%); border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">Close</button>
+                            </div>
+                        `;
+                    }
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error updating customer:', error);
+                alert('Failed to send update request: ' + error.message);
+                
+                // Re-enable button
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
+            }
+        };
+        saveBtn.onmouseover = () => saveBtn.style.transform = 'translateY(-2px)';
+        saveBtn.onmouseout = () => saveBtn.style.transform = 'translateY(0)';
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.onclick = () => modalBackdrop.remove();
+        cancelBtn.onmouseover = () => cancelBtn.style.transform = 'translateY(-2px)';
+        cancelBtn.onmouseout = () => cancelBtn.style.transform = 'translateY(0)';
+    }
+    
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modalBackdrop.appendChild(modal);
+    
+    // Only append to body if it's a new backdrop
+    if (!existingBackdrop) {
+        document.body.appendChild(modalBackdrop);
+    }
+    
+    // Close on backdrop click
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) {
+            modalBackdrop.remove();
+        }
+    });
+    
+    // Close on Escape key
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            modalBackdrop.remove();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
 }
 
 
