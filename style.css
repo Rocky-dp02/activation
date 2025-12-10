@@ -1,0 +1,553 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Fira Code', monospace;
+    background: #0a0e27;
+    color: #00ff41;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Matrix Rain Background */
+.matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(0deg, rgba(10, 14, 39, 0.95) 0%, rgba(10, 14, 39, 0.8) 100%),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 255, 65, 0.03) 2px,
+            rgba(0, 255, 65, 0.03) 4px
+        );
+    animation: scan 8s linear infinite;
+    z-index: 0;
+}
+
+@keyframes scan {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 0 100%;
+    }
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    width: 90%;
+    max-width: 600px;
+    animation: slideIn 0.8s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.terminal-window {
+    background: rgba(13, 17, 23, 0.95);
+    border: 2px solid #00ff41;
+    border-radius: 8px;
+    box-shadow: 
+        0 0 20px rgba(0, 255, 65, 0.3),
+        0 0 40px rgba(0, 255, 65, 0.2),
+        inset 0 0 60px rgba(0, 255, 65, 0.05);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.terminal-header {
+    background: linear-gradient(to bottom, #1a1f2e, #0d1117);
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #00ff41;
+    position: relative;
+}
+
+.buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn.red {
+    background: #ff5f56;
+    box-shadow: 0 0 5px #ff5f56;
+}
+
+.btn.yellow {
+    background: #ffbd2e;
+    box-shadow: 0 0 5px #ffbd2e;
+}
+
+.btn.green {
+    background: #27c93f;
+    box-shadow: 0 0 5px #27c93f;
+}
+
+.btn:hover {
+    transform: scale(1.2);
+}
+
+.terminal-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #00ff41;
+    font-size: 14px;
+    font-weight: 500;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.terminal-body {
+    padding: 30px 25px;
+}
+
+.ascii-art {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.ascii-art pre {
+    color: #00ff41;
+    font-size: 11px;
+    line-height: 1.4;
+    text-shadow: 0 0 8px rgba(0, 255, 65, 0.7);
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+    }
+    to {
+        text-shadow: 0 0 15px rgba(0, 255, 65, 0.9);
+    }
+}
+
+.login-form {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #00ff41;
+}
+
+.prompt {
+    color: #00d9ff;
+    font-weight: 600;
+}
+
+.separator {
+    color: #888;
+}
+
+.path {
+    color: #a855f7;
+}
+
+.dollar {
+    color: #00ff41;
+    margin-right: 5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #00ff41;
+    border-radius: 4px;
+    color: #00ff41;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.form-group input::placeholder {
+    color: rgba(0, 255, 65, 0.4);
+}
+
+.form-group input:focus {
+    border-color: #00d9ff;
+    box-shadow: 
+        0 0 10px rgba(0, 217, 255, 0.3),
+        inset 0 0 10px rgba(0, 255, 65, 0.1);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.form-group input:focus::placeholder {
+    color: rgba(0, 217, 255, 0.4);
+}
+
+/* Remember Me Checkbox */
+.remember-me {
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.remember-me input[type="checkbox"] {
+    display: none;
+}
+
+.remember-me label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #00ff41;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.5);
+    margin-right: 10px;
+    position: relative;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.checkbox-custom::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    color: #0a0e27;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.remember-me input[type="checkbox"]:checked + label .checkbox-custom {
+    background: linear-gradient(135deg, #00ff41 0%, #00d9ff 100%);
+    border-color: #00d9ff;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.remember-me input[type="checkbox"]:checked + label .checkbox-custom::after {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.checkbox-label {
+    color: rgba(0, 255, 65, 0.8);
+    font-size: 13px;
+    transition: color 0.3s;
+}
+
+.remember-me label:hover .checkbox-custom {
+    border-color: #00d9ff;
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+}
+
+.remember-me label:hover .checkbox-label {
+    color: #00ff41;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #00ff41 0%, #00d9ff 100%);
+    border: none;
+    border-radius: 4px;
+    color: #0a0e27;
+    font-family: 'Fira Code', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+button:hover::before {
+    left: 100%;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 5px 20px rgba(0, 255, 65, 0.4),
+        0 0 30px rgba(0, 217, 255, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.message {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.error {
+    background: rgba(255, 59, 48, 0.2);
+    border: 1px solid #ff3b30;
+    color: #ff3b30;
+    display: block;
+}
+
+.message.success {
+    background: rgba(0, 255, 65, 0.2);
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    display: block;
+}
+
+.footer-info {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 255, 65, 0.3);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.footer-info p {
+    font-size: 11px;
+    color: rgba(0, 255, 65, 0.7);
+}
+
+.status-online {
+    color: #00ff41;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+}
+
+/* Loading State */
+.btn-loading {
+    display: none;
+}
+
+button.loading {
+    background: linear-gradient(135deg, #666 0%, #444 100%);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+button.loading .btn-text {
+    display: none;
+}
+
+button.loading .btn-loading {
+    display: inline;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        max-width: 95%;
+    }
+    
+    .terminal-window {
+        width: 100%;
+    }
+    
+    .terminal-header h2 {
+        font-size: 14px;
+    }
+    
+    .terminal-controls span {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .terminal-body {
+        padding: 20px 15px;
+    }
+    
+    .ascii-art pre {
+        font-size: 8px;
+    }
+    
+    .terminal-title {
+        font-size: 16px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+    }
+    
+    .form-group input {
+        font-size: 13px;
+        padding: 10px;
+    }
+    
+    .login-btn {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .remember-me {
+        font-size: 12px;
+    }
+    
+    .footer-info {
+        flex-direction: column;
+        gap: 5px;
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        width: 98%;
+        padding: 10px;
+    }
+    
+    .terminal-body {
+        padding: 15px 10px;
+    }
+    
+    .ascii-art pre {
+        font-size: 7px;
+    }
+    
+    .terminal-title {
+        font-size: 14px;
+    }
+    
+    .form-group label {
+        font-size: 12px;
+    }
+    
+    .form-group input {
+        font-size: 12px;
+        padding: 8px;
+    }
+    
+    .login-btn {
+        padding: 8px;
+        font-size: 12px;
+    }
+    
+    .remember-me {
+        font-size: 11px;
+    }
+    
+    .footer-info {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .terminal-header h2 {
+        font-size: 12px;
+    }
+    
+    .ascii-art pre {
+        font-size: 6px;
+    }
+    
+    .terminal-title {
+        font-size: 12px;
+    }
+    
+    .form-group {
+        margin-bottom: 12px;
+    }
+}
+
+/* Glitch Effect on Error */
+.terminal-window.glitch {
+    animation: glitch 0.3s;
+}
+
+@keyframes glitch {
+    0%, 100% {
+        transform: translate(0);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+    }
+    40% {
+        transform: translate(-2px, -2px);
+    }
+    60% {
+        transform: translate(2px, 2px);
+    }
+    80% {
+        transform: translate(2px, -2px);
+    }
+}

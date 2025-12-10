@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDSS - Activation Master Collection</title>
+    <link rel="stylesheet" href="landing-style.css">
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" id="backBtn">
+                <span>← BACK</span>
+            </button>
+            <h1>IDSS</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span class="user-icon">👤</span>
+                <span class="user-name" id="userName">Loading...</span>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <span>[ LOGOUT ]</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-layout">
+            <!-- Sidebar Toggle Button -->
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <span class="toggle-icon">☰</span>
+            </button>
+            
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>MENU</h3>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active" data-page="account-info">
+                        <span class="nav-icon">👤</span>
+                        <span class="nav-label">Show Account Information</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="verify-account">
+                        <span class="nav-icon">✓</span>
+                        <span class="nav-label">Verify Account</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="search-vouchers">
+                        <span class="nav-icon">🎫</span>
+                        <span class="nav-label">Search Vouchers</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="search-retailer">
+                        <span class="nav-icon">🏪</span>
+                        <span class="nav-label">Search Retailer</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="check-refinstall">
+                        <span class="nav-icon">🔍</span>
+                        <span class="nav-label">Check RefInstall</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <div class="buttons">
+                            <span class="btn red"></span>
+                            <span class="btn yellow"></span>
+                            <span class="btn green"></span>
+                        </div>
+                        <div class="terminal-title">root@idss-system:~</div>
+                    </div>
+                    
+                    <div class="terminal-body">
+                        <div class="idss-content" id="mainContent">
+                            <!-- Content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="idss-script.js"></script>
+</body>
+</html>

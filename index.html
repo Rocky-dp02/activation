@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECURE ACCESS // LOGIN</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    
+    <div class="container">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="buttons">
+                    <span class="btn red"></span>
+                    <span class="btn yellow"></span>
+                    <span class="btn green"></span>
+                </div>
+                <div class="terminal-title">root@secure-access:~</div>
+            </div>
+            
+            <div class="terminal-body">
+                <div class="ascii-art">
+                    <pre>
+    ╔═══════════════════════════════════╗
+    ║   SECURE ACCESS TERMINAL v2.4.1   ║
+    ║     UNAUTHORIZED ACCESS DENIED    ║
+    ╚═══════════════════════════════════╝
+                    </pre>
+                </div>
+                
+                <div class="login-form">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="email">
+                                <span class="prompt">root@system</span>
+                                <span class="separator">:</span>
+                                <span class="path">~</span>
+                                <span class="dollar">$</span> email
+                            </label>
+                            <input type="email" id="email" placeholder="test@1.com" autocomplete="off">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">
+                                <span class="prompt">root@system</span>
+                                <span class="separator">:</span>
+                                <span class="path">~</span>
+                                <span class="dollar">$</span> password
+                            </label>
+                            <input type="password" id="password" placeholder="Ragnarok123123!" autocomplete="off">
+                        </div>
+                        
+                        <div class="remember-me">
+                            <input type="checkbox" id="rememberMe">
+                            <label for="rememberMe">
+                                <span class="checkbox-custom"></span>
+                                <span class="checkbox-label">Remember my credentials</span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" id="loginBtn">
+                            <span class="btn-text">[ INITIATE ACCESS ]</span>
+                            <span class="btn-loading" style="display: none;">AUTHENTICATING...</span>
+                        </button>
+                        
+                        <div class="message" id="message"></div>
+                    </form>
+                </div>
+                
+                <div class="footer-info">
+                    <p>⚡ System Status: <span class="status-online">ONLINE</span></p>
+                    <p>🔒 Encryption: <span class="status-online">AES-256</span></p>
+                    <p>📡 Connection: <span class="status-online">SECURE</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
