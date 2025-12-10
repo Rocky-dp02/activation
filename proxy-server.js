@@ -346,11 +346,65 @@ setInterval(() => {
     }
 }, 5 * 60 * 1000);
 
-app.listen(PORT, () => {
+// ============================================
+// SERVER ERROR HANDLING & AUTO-RECOVERY
+// ============================================
+
+// Global error handlers to prevent crashes
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    console.log('⚠️ Server continuing despite error...');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    console.log('⚠️ Server continuing despite error...');
+});
+
+// Graceful shutdown handler
+process.on('SIGTERM', () => {
+    console.log('📡 SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('\n📡 SIGINT received, shutting down gracefully...');
+    server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+    });
+});
+
+// Health check endpoint for monitoring
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+    });
+});
+
+// Start server with error handling
+const server = app.listen(PORT, () => {
     console.log(`🚀 Proxy server running on http://localhost:${PORT}`);
     console.log(`🔒 Security features enabled:`);
     console.log(`   ✅ Request encryption/decryption`);
     console.log(`   ✅ Rate limiting (${MAX_REQUESTS_PER_WINDOW} req/min)`);
     console.log(`   ✅ Security headers`);
     console.log(`   ✅ Request tracking & validation`);
+    console.log(`   ✅ Health monitoring endpoint (/health)`);
+    console.log(`   ✅ Auto-recovery on errors`);
+}).on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use`);
+        console.log('💡 Try: pkill -9 node && npm start');
+        process.exit(1);
+    } else {
+        console.error('❌ Server error:', error);
+        process.exit(1);
+    }
 });

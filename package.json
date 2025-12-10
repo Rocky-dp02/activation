@@ -4,7 +4,12 @@
   "description": "Proxy server for activation system",
   "main": "proxy-server.js",
   "scripts": {
-    "start": "node proxy-server.js"
+    "start": "node proxy-server.js",
+    "dev": "node proxy-server.js",
+    "restart": "pkill -9 node || true && npm start",
+    "stop": "pkill -9 node",
+    "status": "lsof -ti:3000 && echo 'Server is running on port 3000' || echo 'Server is not running'",
+    "auto": "./start-server-auto.sh"
   },
   "dependencies": {
     "express": "^4.18.2",

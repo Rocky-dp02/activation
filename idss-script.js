@@ -229,12 +229,116 @@ async function safeFetch(url, options = {}, context = 'API call', encrypt = true
     throw lastError;
 }
 
+// ============================================
+// SERVER HEALTH MONITORING
+// ============================================
+
+let serverHealthCheckInterval = null;
+let serverDownNotified = false;
+
+// Periodic server health check
+async function monitorServerHealth() {
+    try {
+        const isRunning = await checkProxyServer();
+        
+        if (!isRunning && !serverDownNotified) {
+            console.warn('⚠️ Proxy server health check failed');
+            serverDownNotified = true;
+            
+            // Show persistent warning
+            showServerDownWarning();
+        } else if (isRunning && serverDownNotified) {
+            console.log('✅ Proxy server is back online');
+            serverDownNotified = false;
+            hideServerDownWarning();
+        }
+    } catch (error) {
+        console.error('Health check error:', error);
+    }
+}
+
+// Show persistent server down warning
+function showServerDownWarning() {
+    const existingWarning = document.getElementById('server-down-warning');
+    if (existingWarning) return;
+    
+    const warning = document.createElement('div');
+    warning.id = 'server-down-warning';
+    warning.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #ff4444, #cc0000);
+        color: white;
+        padding: 12px 20px;
+        text-align: center;
+        z-index: 99999;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        animation: slideDown 0.3s ease;
+    `;
+    
+    warning.innerHTML = `
+        ⚠️ Proxy Server Disconnected - API calls will fail. 
+        <button onclick="location.reload()" style="
+            margin-left: 15px;
+            padding: 5px 15px;
+            background: white;
+            color: #cc0000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        ">Reconnect</button>
+        <span style="margin-left: 10px; font-size: 12px; opacity: 0.9;">Run: npm start</span>
+    `;
+    
+    document.body.appendChild(warning);
+}
+
+// Hide server down warning
+function hideServerDownWarning() {
+    const warning = document.getElementById('server-down-warning');
+    if (warning) {
+        warning.remove();
+    }
+}
+
+// Start health monitoring
+function startServerHealthMonitoring() {
+    // Check every 10 seconds
+    serverHealthCheckInterval = setInterval(monitorServerHealth, 10000);
+    
+    // Initial check after 2 seconds
+    setTimeout(monitorServerHealth, 2000);
+    
+    console.log('🏥 Server health monitoring started (10s interval)');
+}
+
+// Stop health monitoring
+function stopServerHealthMonitoring() {
+    if (serverHealthCheckInterval) {
+        clearInterval(serverHealthCheckInterval);
+        serverHealthCheckInterval = null;
+        console.log('🛑 Server health monitoring stopped');
+    }
+}
+
 // Check authentication on load
 window.addEventListener('load', () => {
     checkAuth();
     loadUserData();
     initializeSidebar();
     loadPage('account-info'); // Load default page
+    
+    // Start server health monitoring
+    startServerHealthMonitoring();
+});
+
+// Stop monitoring when page unloads
+window.addEventListener('beforeunload', () => {
+    stopServerHealthMonitoring();
 });
 
 // Check if user is authenticated
