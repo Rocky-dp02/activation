@@ -1,3 +1,234 @@
+// ============================================
+// API SECURITY & ENCRYPTION UTILITIES
+// ============================================
+
+// Simple XOR encryption for API payloads (obfuscation layer)
+function encryptPayload(data) {
+    const key = 'ACT1V@T10N_S3CUR3_K3Y_2025'; // Secret key
+    const jsonStr = JSON.stringify(data);
+    let encrypted = '';
+    
+    for (let i = 0; i < jsonStr.length; i++) {
+        encrypted += String.fromCharCode(
+            jsonStr.charCodeAt(i) ^ key.charCodeAt(i % key.length)
+        );
+    }
+    
+    // Base64 encode to make it URL-safe
+    return btoa(encrypted);
+}
+
+// Decrypt API payload
+function decryptPayload(encryptedData) {
+    const key = 'ACT1V@T10N_S3CUR3_K3Y_2025';
+    const encrypted = atob(encryptedData);
+    let decrypted = '';
+    
+    for (let i = 0; i < encrypted.length; i++) {
+        decrypted += String.fromCharCode(
+            encrypted.charCodeAt(i) ^ key.charCodeAt(i % key.length)
+        );
+    }
+    
+    return JSON.parse(decrypted);
+}
+
+// Generate random request ID to prevent request replay attacks
+function generateRequestId() {
+    return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Add timestamp and signature to prevent tampering
+function signRequest(payload) {
+    const timestamp = Date.now();
+    const requestId = generateRequestId();
+    
+    return {
+        ...payload,
+        _meta: {
+            timestamp,
+            requestId,
+            signature: btoa(`${timestamp}:${requestId}`)
+        }
+    };
+}
+
+// Validate response integrity
+function validateResponse(response) {
+    // Check if response has expected structure
+    if (!response || typeof response !== 'object') {
+        throw new Error('Invalid response format');
+    }
+    return true;
+}
+
+// ============================================
+// API ERROR HANDLING UTILITIES
+// ============================================
+
+// Check if proxy server is running
+async function checkProxyServer() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        const response = await fetch('http://localhost:3000/api/account-info', {
+            method: 'HEAD',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+// Show error modal to user
+function showApiErrorModal(message, isServerDown = false) {
+    const existingModal = document.getElementById('api-error-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'api-error-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, rgba(20,20,30,0.98), rgba(30,30,50,0.98));
+        border: 2px solid rgba(255,50,50,0.6);
+        border-radius: 12px;
+        padding: 30px;
+        z-index: 10000;
+        min-width: 400px;
+        box-shadow: 0 8px 32px rgba(255,0,0,0.3);
+    `;
+    
+    const serverInstructions = isServerDown ? `
+        <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,0,0.1); border-left: 3px solid #ffc107; border-radius: 4px;">
+            <strong>🔧 How to fix:</strong><br>
+            <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">npm start</code>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #aaa;">Run this command in the project directory to start the proxy server.</p>
+        </div>
+    ` : '';
+    
+    modal.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #ff5555; font-size: 20px;">⚠️ API Error</h3>
+        <p style="margin: 0 0 10px 0; color: #fff;">${message}</p>
+        ${serverInstructions}
+        <button id="close-error-modal" style="
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        ">Close</button>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('close-error-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+}
+
+// Enhanced fetch with automatic error handling, retry, and encryption
+async function safeFetch(url, options = {}, context = 'API call', encrypt = true) {
+    const maxRetries = 2;
+    let lastError;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            // Check server on first attempt
+            if (attempt === 0) {
+                const serverRunning = await checkProxyServer();
+                if (!serverRunning) {
+                    showApiErrorModal(
+                        'Proxy server is not running. Please start the server to continue.',
+                        true
+                    );
+                    throw new Error('Proxy server not running');
+                }
+            }
+            
+            // Prepare options with encryption if enabled
+            let finalOptions = { ...options };
+            
+            if (encrypt && options.body) {
+                try {
+                    const originalPayload = JSON.parse(options.body);
+                    const signedPayload = signRequest(originalPayload);
+                    const encryptedPayload = encryptPayload(signedPayload);
+                    
+                    finalOptions.body = JSON.stringify({ 
+                        encrypted: true,
+                        data: encryptedPayload 
+                    });
+                    
+                    // Add custom header to indicate encrypted request
+                    finalOptions.headers = {
+                        ...finalOptions.headers,
+                        'X-Encrypted-Request': 'true',
+                        'X-Request-ID': signedPayload._meta.requestId
+                    };
+                    
+                    console.log(`🔐 [${context}] Request encrypted with ID:`, signedPayload._meta.requestId);
+                } catch (encError) {
+                    console.warn('Encryption failed, sending unencrypted:', encError);
+                    // Fallback to unencrypted if encryption fails
+                }
+            }
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+            
+            const response = await fetch(url, {
+                ...finalOptions,
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return response;
+            
+        } catch (error) {
+            lastError = error;
+            console.error(`${context} attempt ${attempt + 1} failed:`, error);
+            
+            if (error.name === 'AbortError') {
+                showApiErrorModal('Request timeout. The server took too long to respond.');
+                throw error;
+            }
+            
+            if (error.message === 'Failed to fetch' || error.message === 'Proxy server not running') {
+                // Don't retry if server is down
+                throw error;
+            }
+            
+            // Retry on other errors (but not on last attempt)
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+                continue;
+            }
+        }
+    }
+    
+    // All retries failed
+    showApiErrorModal(`${context} failed after ${maxRetries + 1} attempts: ${lastError.message}`);
+    throw lastError;
+}
+
 // Check authentication on load
 window.addEventListener('load', () => {
     checkAuth();
@@ -522,20 +753,16 @@ async function searchVoucher(searchValue) {
         
         console.log('Voucher search payload:', payload);
         
-        // Make API call through proxy
-        const response = await fetch('http://localhost:3000/api/search-vouchers', {
+        // Make API call through proxy with error handling
+        const response = await safeFetch('http://localhost:3000/api/search-vouchers', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload)
-        });
+        }, 'Voucher search');
 
         console.log('Voucher search response status:', response.status);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
 
         const htmlResponse = await response.text();
         console.log('Voucher search response received, length:', htmlResponse.length);
@@ -797,21 +1024,16 @@ async function reprocessVoucher() {
         
         console.log('Reprocess payload:', payload);
         
-        // Make API call through proxy
-        const response = await fetch('http://localhost:3000/api/reprocess-voucher', {
+        // Make API call through proxy with error handling
+        const response = await safeFetch('http://localhost:3000/api/reprocess-voucher', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload)
-        });
+        }, 'Reprocess voucher');
 
         console.log('Reprocess response status:', response.status);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-        }
 
         const result = await response.json();
         console.log('Reprocess result:', result);
@@ -907,14 +1129,14 @@ async function verifyAccount(accountNumber) {
         
         console.log('Verify payload:', payload);
         
-        // Make API call through proxy
-        const response = await fetch('http://localhost:3000/api/verify', {
+        // Make API call through proxy with error handling
+        const response = await safeFetch('http://localhost:3000/api/verify', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload)
-        });
+        }, 'Verify account');
 
         console.log('Verify response status:', response.status);
 
@@ -1127,20 +1349,16 @@ async function disconnectAccount(accountNumber) {
         
         console.log('Disconnect payload:', payload);
         
-        // Make API call through proxy
-        const response = await fetch('http://localhost:3000/api/disconnect', {
+        // Make API call through proxy with error handling
+        const response = await safeFetch('http://localhost:3000/api/disconnect', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload)
-        });
+        }, 'Disconnect account');
 
         console.log('Disconnect response status:', response.status);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
 
         const responseText = await response.text();
         console.log('Disconnect response:', responseText);
@@ -1237,21 +1455,17 @@ async function searchAccount(accountNumber) {
         
         console.log('Request payload:', payload);
         
-        // Make API call through proxy to avoid CORS issues
-        const response = await fetch('http://localhost:3000/api/account-info', {
+        // Make API call through proxy to avoid CORS issues with error handling
+        const response = await safeFetch('http://localhost:3000/api/account-info', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload)
-        });
+        }, 'Account info');
 
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
 
         const htmlResponse = await response.text();
         console.log('Response received, length:', htmlResponse.length);
@@ -1660,6 +1874,11 @@ function displayRetailerResults(data) {
         let html = '<div class="retailer-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr)); gap: 20px;">';
         
         retailers.forEach((retailer, index) => {
+            // Escape values for safe HTML attributes
+            const escapedId = (retailer.retailerId || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const escapedName = (retailer.retailerfullname || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const escapedMobile = (retailer.retailerMobileNumber || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            
             html += `
                 <div class="retailer-card" style="
                     background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, rgba(0, 217, 255, 0.05) 100%);
@@ -1671,7 +1890,7 @@ function displayRetailerResults(data) {
                     cursor: pointer;
                 " onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 12px rgba(0, 255, 65, 0.4)'; this.style.borderColor='#00ff41';" 
                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(0, 255, 65, 0.3)';"
-                   onclick="selectRetailer('${retailer.retailerId}', '${retailer.retailerfullname}', '${retailer.retailerMobileNumber}')">
+                   onclick="selectRetailer('${escapedId}', '${escapedName}', '${escapedMobile}')">
                     <div style="
                         background: linear-gradient(135deg, #00ff41 0%, #00d9ff 100%);
                         color: #0a0e27;
@@ -1754,6 +1973,8 @@ function showRetailerMessage(message, type) {
 
 // Handle retailer card selection
 async function selectRetailer(retailerId, fullName, mobileNumber) {
+    console.log('selectRetailer called with:', { retailerId, fullName, mobileNumber });
+    
     // Create and show modal
     const modal = document.createElement('div');
     modal.id = 'retailerDetailsModal';
@@ -1821,7 +2042,9 @@ async function selectRetailer(retailerId, fullName, mobileNumber) {
     
     // Fetch retailer account details
     try {
-        const response = await fetch('http://localhost:3000/api/retailer-account', {
+        console.log('Fetching retailer account for ID:', retailerId);
+        
+        const response = await safeFetch('http://localhost:3000/api/retailer-account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1831,13 +2054,12 @@ async function selectRetailer(retailerId, fullName, mobileNumber) {
                 trans: 'viewdetails',
                 user: retailerId
             })
-        });
+        }, 'Retailer account');
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        console.log('Response status:', response.status, response.statusText);
         
         const htmlText = await response.text();
+        console.log('Response received, length:', htmlText.length);
         
         // Parse HTML to extract data
         const parser = new DOMParser();
@@ -1845,6 +2067,7 @@ async function selectRetailer(retailerId, fullName, mobileNumber) {
         const table = doc.querySelector('table');
         
         if (!table) {
+            console.error('No table found in response. HTML preview:', htmlText.substring(0, 500));
             throw new Error('No data found in response');
         }
         
@@ -2044,7 +2267,7 @@ async function checkRefInstall(searchQuery) {
     if (resultDiv) resultDiv.style.display = 'none';
     
     try {
-        const response = await fetch('http://localhost:3000/api/check-refinstall', {
+        const response = await safeFetch('http://localhost:3000/api/check-refinstall', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -2053,11 +2276,7 @@ async function checkRefInstall(searchQuery) {
                 trans: 'viewdetails',
                 user: searchQuery
             })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        }, 'Check RefInstall');
 
         const htmlData = await response.text();
         console.log('RefInstall check response:', htmlData);

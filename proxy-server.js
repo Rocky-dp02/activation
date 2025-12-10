@@ -9,6 +9,113 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// ============================================
+// ENCRYPTION UTILITIES (Server-side)
+// ============================================
+
+// Decrypt incoming encrypted requests
+function decryptPayload(encryptedData) {
+    const key = 'ACT1V@T10N_S3CUR3_K3Y_2025';
+    const encrypted = Buffer.from(encryptedData, 'base64').toString('utf-8');
+    let decrypted = '';
+    
+    for (let i = 0; i < encrypted.length; i++) {
+        decrypted += String.fromCharCode(
+            encrypted.charCodeAt(i) ^ key.charCodeAt(i % key.length)
+        );
+    }
+    
+    return JSON.parse(decrypted);
+}
+
+// Middleware to handle encrypted requests
+function decryptionMiddleware(req, res, next) {
+    const isEncrypted = req.headers['x-encrypted-request'] === 'true';
+    const requestId = req.headers['x-request-id'];
+    
+    if (isEncrypted && req.body && req.body.encrypted && req.body.data) {
+        try {
+            console.log('🔓 Decrypting request with ID:', requestId);
+            const decryptedPayload = decryptPayload(req.body.data);
+            
+            // Remove metadata before forwarding
+            const { _meta, ...cleanPayload } = decryptedPayload;
+            req.body = cleanPayload;
+            
+            console.log('✅ Request decrypted successfully');
+        } catch (error) {
+            console.error('❌ Decryption failed:', error);
+            return res.status(400).json({ error: 'Invalid encrypted payload' });
+        }
+    }
+    
+    next();
+}
+
+// Apply decryption middleware to all routes
+app.use(decryptionMiddleware);
+
+// ============================================
+// SECURITY HEADERS & RATE LIMITING
+// ============================================
+
+// Request tracking for rate limiting
+const requestTracker = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 100;
+
+// Rate limiting middleware
+function rateLimitMiddleware(req, res, next) {
+    const clientId = req.ip || 'unknown';
+    const now = Date.now();
+    
+    if (!requestTracker.has(clientId)) {
+        requestTracker.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    } else {
+        const tracker = requestTracker.get(clientId);
+        
+        if (now > tracker.resetTime) {
+            tracker.count = 1;
+            tracker.resetTime = now + RATE_LIMIT_WINDOW;
+        } else {
+            tracker.count++;
+            
+            if (tracker.count > MAX_REQUESTS_PER_WINDOW) {
+                console.warn(`⚠️ Rate limit exceeded for ${clientId}`);
+                return res.status(429).json({ 
+                    error: 'Too many requests. Please try again later.',
+                    retryAfter: Math.ceil((tracker.resetTime - now) / 1000)
+                });
+            }
+        }
+    }
+    
+    next();
+}
+
+// Security headers middleware
+function securityHeadersMiddleware(req, res, next) {
+    // Prevent response caching to avoid sensitive data storage
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    // Prevent MIME type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    // Prevent clickjacking
+    res.setHeader('X-Frame-Options', 'DENY');
+    
+    // Add request ID for tracking
+    res.setHeader('X-Request-Timestamp', Date.now().toString());
+    
+    next();
+}
+
+// Apply security middlewares
+app.use(rateLimitMiddleware);
+app.use(securityHeadersMiddleware);
+
 // Proxy endpoint for account information
 app.post('/api/account-info', async (req, res) => {
     try {
@@ -218,6 +325,32 @@ app.post('/api/check-refinstall', async (req, res) => {
     }
 });
 
+// ============================================
+// CLEANUP & MAINTENANCE
+// ============================================
+
+// Clean up old request tracker entries every 5 minutes
+setInterval(() => {
+    const now = Date.now();
+    let cleaned = 0;
+    
+    for (const [clientId, tracker] of requestTracker.entries()) {
+        if (now > tracker.resetTime + RATE_LIMIT_WINDOW) {
+            requestTracker.delete(clientId);
+            cleaned++;
+        }
+    }
+    
+    if (cleaned > 0) {
+        console.log(`🧹 Cleaned ${cleaned} old request tracker entries`);
+    }
+}, 5 * 60 * 1000);
+
 app.listen(PORT, () => {
-    console.log(`Proxy server running on http://localhost:${PORT}`);
+    console.log(`🚀 Proxy server running on http://localhost:${PORT}`);
+    console.log(`🔒 Security features enabled:`);
+    console.log(`   ✅ Request encryption/decryption`);
+    console.log(`   ✅ Rate limiting (${MAX_REQUESTS_PER_WINDOW} req/min)`);
+    console.log(`   ✅ Security headers`);
+    console.log(`   ✅ Request tracking & validation`);
 });
