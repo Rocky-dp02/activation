@@ -209,6 +209,14 @@ if (db2Option) {
     });
 }
 
+// Admin option click handler
+const adminOption = document.getElementById('adminOption');
+if (adminOption) {
+    adminOption.addEventListener('click', () => {
+        window.location.href = 'admin.html';
+    });
+}
+
 // Show notification
 function showNotification(message) {
     const notification = document.createElement('div');

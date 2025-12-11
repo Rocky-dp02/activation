@@ -1,0 +1,568 @@
+                .sidebar-controls .stats-grid {
+                    margin-top: 16px;
+                    background: #000;
+                    border-radius: 4px;
+                    border: 1px solid #003300;
+                    padding: 8px 4px 4px 4px;
+                }
+                .sidebar-controls .stat-card {
+                    background: #001a00;
+                    border: 1px solid #00ff41;
+                    border-radius: 4px;
+                    margin-bottom: 0;
+                    <title>Log Records - Activation System</title>
+                    <link rel="stylesheet" href="landing-style.css">
+        .sidebar-controls {
+            background: none;
+            border: none;
+            border-radius: 0;
+            padding: 0 8px 0 8px;
+            margin: 18px 0 0 0;
+            box-shadow: none;
+        }
+        
+        .main-content {
+            <header class="header">
+                <div class="header-left">
+                    <button class="home-icon-btn" id="backBtn">
+                        <span>🏠</span>
+                    </button>
+                </div>
+                <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+                    <h1>Log Records</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-info">
+                        <span class="user-icon">👤</span>
+                        <span class="user-name" id="userName">Loading...</span>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn">
+                        <span>[ LOGOUT ]</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="container">
+                <aside class="sidebar" id="sidebar">
+                    <div class="sidebar-header">
+                        <h3>MENU</h3>
+                    </div>
+                    <nav class="sidebar-nav">
+                        <a href="#" class="nav-item active" data-filter="all">
+                            <span class="nav-icon">📊</span>
+                            <span class="nav-label">All Logs</span>
+                        </a>
+                        <a href="#" class="nav-item" data-filter="api">
+                            <span class="nav-icon">🌐</span>
+                            <span class="nav-label">API Calls</span>
+                        </a>
+                        <a href="#" class="nav-item" data-filter="auth">
+                            <span class="nav-icon">🔐</span>
+                            <span class="nav-label">Authentication</span>
+                        </a>
+                        <a href="#" class="nav-item" data-filter="search">
+                            <span class="nav-icon">🔍</span>
+                            <span class="nav-label">Search Actions</span>
+                        </a>
+                        <a href="#" class="nav-item" data-filter="reprocess">
+                            <span class="nav-icon">🔄</span>
+                            <span class="nav-label">Reprocess</span>
+                        </a>
+                        <a href="#" class="nav-item" data-filter="error">
+                            <span class="nav-icon">❌</span>
+                            <span class="nav-label">Errors</span>
+                        </a>
+                        <a href="#" class="nav-item" data-filter="system">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-label">System Events</span>
+                        </a>
+                    </nav>
+                    <div class="sidebar-controls">
+                        <div class="search-bar-container">
+                            <input type="text" id="searchLogs" placeholder="SEARCH LOGS...">
+                        </div>
+                        <button id="autoRefreshBtn" class="auto-refresh-toggle">
+                            AUTO-REFRESH: OFF
+                        </button>
+                        <button id="exportLogsBtn" class="action-btn">
+                            EXPORT
+                        </button>
+                        <button id="refreshLogsBtn" class="action-btn">
+                            REFRESH
+                        </button>
+                        <div id="logStats" class="stats-grid"></div>
+                    </div>
+                    <div class="sidebar-notes">
+                        <h4>Notes</h4>
+                        <textarea id="sidebarNotes" placeholder="Type your notes here..."></textarea>
+                    </div>
+                    <div class="sidebar-footer">
+                        <button class="btn-clear" id="clearLogsBtn">
+                            <span>🗑️ Clear Logs</span>
+                        </button>
+                    </div>
+                </aside>
+                <div class="main-content">
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <div class="buttons">
+                                <span class="btn red"></span>
+                                <span class="btn yellow"></span>
+                                <span class="btn green"></span>
+                            </div>
+                            <div class="terminal-title">system.logs</div>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="logs-header-banner">
+                                <div class="dos-header">
+                                    <div>ACTIVATION SYSTEM v1.0</div>
+                                    <div style="margin-top: 5px;">ACTIVITY LOG MONITOR - LAST 100 ENTRIES</div>
+                                    <div style="margin-top: 10px;" class="dos-prompt">
+                                        <span>C:\SYSTEM\LOGS></span><span class="cursor"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="logsContainer">
+                                <div class="empty-state">
+                                    <div class="loading-text">LOADING SYSTEM LOGS</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            background: #000;
+        }
+        
+        .terminal-window {
+            background: #000;
+            border: 2px solid #00ff41;
+            box-shadow: none;
+        }
+        
+        .terminal-body {
+            background: #000;
+        }
+        
+        /* DOS Terminal Style */
+        .logs-header-banner {
+            background: #000;
+            border: none;
+            box-shadow: none;
+            padding: 10px 0 10px 0;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            border-radius: 0;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .dos-header {
+            color: #00ff41;
+            font-size: 14px;
+            line-height: 1.2;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .dos-prompt {
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #00ff41;
+            animation: blink 1s step-end infinite;
+            margin-left: 2px;
+        }
+
+        .auto-refresh-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #000;
+            padding: 8px 12px;
+            border: 2px solid #00ff41;
+            font-size: 12px;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .auto-refresh-toggle:hover {
+            background: #00ff41;
+            color: #000;
+        }
+
+        .auto-refresh-toggle.active {
+            background: #00ff41;
+            color: #000;
+        }
+
+        .filter-controls {
+            background: #000;
+            padding: 15px;
+            border: 2px solid #00ff41;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .search-bar-container {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        #searchLogs {
+            width: 100%;
+            padding: 8px;
+            background: #000;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        #searchLogs:focus {
+            outline: none;
+            background: #001a00;
+        }
+
+        #searchLogs::placeholder {
+            color: #007700;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            border: 2px solid #00ff41;
+            background: #000;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .action-btn:hover {
+            background: #00ff41;
+            color: #000;
+        }
+
+        .action-btn:active {
+            background: #007700;
+        }
+
+        .stats-grid {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stat-card {
+            background: #000;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #00ff41;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+            color: #00ff41;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #007700;
+            text-transform: uppercase;
+        }
+
+        .logs-container-enhanced {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            font-family: 'Courier New', monospace;
+            border-radius: 0;
+            border: none;
+            background: #000;
+            box-shadow: none;
+        }
+
+        .log-entry {
+            background: #000;
+            padding: 6px 8px;
+            border-left: 2px solid #00ff41;
+            border-bottom: 1px solid #003300;
+            font-size: 13px;
+            line-height: 1.4;
+            border-radius: 0;
+            margin-bottom: 0;
+            transition: background 0.08s;
+        }
+
+        .log-entry:hover {
+            background: #001a00;
+        }
+
+        .log-line {
+            color: #00ff41;
+            margin: 2px 0;
+            font-size: 13px;
+        }
+
+        .log-time {
+            color: #007700;
+        }
+
+        .log-type {
+            color: #00ff41;
+            font-weight: bold;
+        }
+
+        .log-status-ok {
+            color: #00ff41;
+        }
+
+        .log-status-error {
+            color: #ff0000;
+        }
+
+        .method-badge {
+            color: #00aaff;
+            font-weight: bold;
+        }
+
+        .error-details {
+            background: #000;
+            border: 1px solid #ff0000;
+            padding: 8px;
+            margin: 5px 0;
+            color: #ff0000;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #007700;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: #00ff41;
+        }
+
+        .loading-text {
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .loading-text::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Notification toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #000;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            z-index: 10000;
+            font-size: 12px;
+        }
+
+        .toast.error { border-color: #ff0000; color: #ff0000; }
+
+        /* Desktop layout overrides */
+        @media (min-width: 900px) {
+            .container {
+                max-width: 1200px;
+                margin: 40px auto;
+                display: flex;
+                flex-direction: row;
+                box-shadow: 0 0 40px #001a00;
+                border-radius: 0;
+                min-height: 800px;
+            }
+            .sidebar {
+                min-width: 220px;
+                max-width: 260px;
+                height: auto;
+                position: relative;
+                border-radius: 0;
+            }
+            .main-content {
+                flex: 1;
+                padding: 40px 40px 40px 0;
+                min-width: 0;
+                border-radius: 0;
+            }
+            .terminal-window {
+                margin: 0 auto;
+                max-width: 900px;
+                min-width: 700px;
+                border-radius: 0;
+            }
+            .terminal-header, .terminal-body {
+                border-radius: 0;
+            }
+        }
+        /* Prevent mobile scaling */
+        @media (max-width: 899px) {
+            .container {
+                max-width: 100vw;
+                margin: 0;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+            .main-content {
+                padding: 10px;
+            }
+            .terminal-window {
+                min-width: 0;
+                max-width: 100vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>📋 Log Records</h2>
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+            </div>
+            
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-filter="all">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">All Logs</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="api">
+                    <span class="nav-icon">🌐</span>
+                    <span class="nav-text">API Calls</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="auth">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Authentication</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="search">
+                    <span class="nav-icon">🔍</span>
+                    <span class="nav-text">Search Actions</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="reprocess">
+                    <span class="nav-icon">🔄</span>
+                    <span class="nav-text">Reprocess</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="error">
+                    <span class="nav-icon">❌</span>
+                    <span class="nav-text">Errors</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="system">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">System Events</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Controls: Search, Auto-Refresh, Export, Refresh, Stats -->
+            <div class="sidebar-controls" style="margin: 24px 0 0 0;">
+                <div class="search-bar-container" style="margin-bottom: 10px;">
+                    <input type="text" id="searchLogs" placeholder="SEARCH LOGS...">
+                </div>
+                <button id="autoRefreshBtn" class="auto-refresh-toggle" style="width:100%; margin-bottom: 10px;">
+                    AUTO-REFRESH: OFF
+                </button>
+                <button id="exportLogsBtn" class="action-btn" style="width:100%; margin-bottom: 10px;">
+                    EXPORT
+                </button>
+                <button id="refreshLogsBtn" class="action-btn" style="width:100%; margin-bottom: 10px;">
+                    REFRESH
+                </button>
+                <div id="logStats" class="stats-grid" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="btn-home" id="backBtn">
+                    <span>🏠 Home</span>
+                </button>
+                <button class="btn-clear" id="clearLogsBtn">
+                    <span>🗑️ Clear Logs</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <div class="terminal-buttons">
+                        <span class="btn-close"></span>
+                        <span class="btn-minimize"></span>
+                        <span class="btn-maximize"></span>
+                    </div>
+                    <div class="terminal-title">system.logs</div>
+                    <div class="user-section">
+                        <span class="user-icon">👤</span>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+                    </div>
+                </div>
+                
+                <div class="terminal-body">
+                    <!-- Header Banner -->
+                    <div class="logs-header-banner">
+                        <div class="dos-header">
+                            <div>ACTIVATION SYSTEM v1.0</div>
+                            <div style="margin-top: 5px;">ACTIVITY LOG MONITOR - LAST 100 ENTRIES</div>
+                            <div style="margin-top: 10px;" class="dos-prompt">
+                                <span>C:\SYSTEM\LOGS></span><span class="cursor"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Controls moved to sidebar -->
+                    
+                    <!-- Logs Container -->
+                    <div id="logsContainer">
+                        <div class="empty-state">
+                            <div class="loading-text">LOADING SYSTEM LOGS</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="logs-script.js"></script>
+</body>
+</html>

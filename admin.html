@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Activation Master Collection</title>
+    <link rel="stylesheet" href="landing-style.css">
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="home-icon-btn" id="backBtn">
+                <span>🏠</span>
+            </button>
+        </div>
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+            <h1>Admin Panel</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span class="user-icon">👤</span>
+                <span class="user-name" id="userName">Loading...</span>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <span>[ LOGOUT ]</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="page-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>ADMIN MENU</h3>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active" data-page="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="users">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-label">User Management</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="settings">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-label">System Settings</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="logs">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-label">Activity Logs</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="reports">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-label">Reports</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="loading">
+                        <span class="nav-icon">⏳</span>
+                        <span class="nav-label">Loading</span>
+                    </a>
+                </nav>
+                
+                <!-- Sidebar Toggle Button -->
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <span class="toggle-icon">←</span>
+                </button>
+                
+                <!-- Notes Section -->
+                <div class="sidebar-notes">
+                    <h4>Notes</h4>
+                    <textarea id="sidebarNotes" placeholder="Type your notes here..."></textarea>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <div class="buttons">
+                            <span class="btn red"></span>
+                            <span class="btn yellow"></span>
+                            <span class="btn green"></span>
+                        </div>
+                        <div class="terminal-title">root@admin-panel:~</div>
+                    </div>
+                    
+                    <div class="terminal-body">
+                        <div class="idss-content" id="mainContent">
+                            <!-- Content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="admin-script.js"></script>
+</body>
+</html>
